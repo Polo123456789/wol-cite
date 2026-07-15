@@ -155,6 +155,29 @@ func TestExtractVerses(t *testing.T) {
 	}
 }
 
+func TestExtractFragmentedVerse(t *testing.T) {
+	const fragmentedHTML = `
+		<p><span id="v24-17-6-1" class="v"><a class="vl vx vp">6&#8239;</a>Será como un árbol solitario en el desierto.</span></p>
+		<div>
+			<p><span id="v24-17-6-2" class="v">Cuando venga el bien, no lo verá,</span></p>
+			<p><span id="v24-17-6-3" class="v">sino que vivirá en lugares áridos del desierto,</span></p>
+			<p><span id="v24-17-6-4" class="v">en una región salada donde nadie puede vivir.</span></p>
+		</div>`
+
+	verses, err := extractVerses([]byte(fragmentedHTML), 24, 17, []int{6})
+	if err != nil {
+		t.Fatalf("extractVerses() error = %v", err)
+	}
+
+	want := []Verse{{
+		Number: 6,
+		Text:   "6 Será como un árbol solitario en el desierto. Cuando venga el bien, no lo verá, sino que vivirá en lugares áridos del desierto, en una región salada donde nadie puede vivir.",
+	}}
+	if !reflect.DeepEqual(verses, want) {
+		t.Fatalf("extractVerses() = %#v, want %#v", verses, want)
+	}
+}
+
 func TestRunWithArgsRange(t *testing.T) {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer

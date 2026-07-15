@@ -354,13 +354,16 @@ func extractVerses(body []byte, bookID int, chapter int, requested []int) ([]Ver
 		requestedSet[verse] = true
 	}
 
-	found := make(map[int]string, len(requested))
+	found := make(map[int][]string, len(requested))
 	var walk func(*html.Node)
 	walk = func(n *html.Node) {
 		if n.Type == html.ElementNode && n.Data == "span" && hasClass(n, "v") {
 			foundBook, foundChapter, foundVerse, ok := parseVerseID(attr(n, "id"))
 			if ok && foundBook == bookID && foundChapter == chapter && requestedSet[foundVerse] {
-				found[foundVerse] = normalizeSpace(verseText(n))
+				fragment := normalizeSpace(verseText(n))
+				if fragment != "" {
+					found[foundVerse] = append(found[foundVerse], fragment)
+				}
 			}
 			return
 		}
@@ -373,11 +376,11 @@ func extractVerses(body []byte, bookID int, chapter int, requested []int) ([]Ver
 
 	verses := make([]Verse, 0, len(requested))
 	for _, verse := range requested {
-		text, ok := found[verse]
-		if !ok {
+		fragments := found[verse]
+		if len(fragments) == 0 {
 			return nil, fmt.Errorf("verse %d not found in WOL chapter", verse)
 		}
-		verses = append(verses, Verse{Number: verse, Text: text})
+		verses = append(verses, Verse{Number: verse, Text: strings.Join(fragments, " ")})
 	}
 	return verses, nil
 }
